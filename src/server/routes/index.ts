@@ -26,8 +26,7 @@ const router = Router();
 //     return res.json('Test!');
 // })
 
-router.post('/cities', 
-    CitiesController.createBodyValidator, 
+router.post('/cities',
     CitiesController.createValidation, 
     CitiesController.create
 )

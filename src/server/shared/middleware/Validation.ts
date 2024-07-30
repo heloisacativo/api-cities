@@ -2,8 +2,10 @@ import { RequestHandler } from "express";
 import { StatusCodes } from "http-status-codes";
 import { Schema, ValidationError } from 'yup';
 
+type TProperty = 'body' | 'header' | 'params' | 'query';
 
-type TValidation = (field: 'body' | 'header' | 'params' | 'query', schema: Schema<any>) => RequestHandler;
+type TAllSchemas = Record<TProperty, Schema<any>>
+type TValidation = (schemas: Partial<TAllSchemas>) => RequestHandler;
 
 // export const validation: TValidation = () => {
 //     return async (req, res, next) =>  {
@@ -11,7 +13,7 @@ type TValidation = (field: 'body' | 'header' | 'params' | 'query', schema: Schem
 // }
 // };
 
-export const validation: TValidation = (field, schema) => async (req, res, next) =>  {
+export const validation: TValidation = (schemas) => async (req, res, next) =>  {
     // Antes
     //     try {
     //         await queryValidation.validate(req.query, {abortEarly: false});
@@ -25,14 +27,15 @@ export const validation: TValidation = (field, schema) => async (req, res, next)
    
     //            errors[error.path] = error.message;
     //        })
-   
-   
-    //        return res.status(StatusCodes.BAD_REQUEST).json({ errors })
+    
     //    }
 
+        const errorsResult: Record<string, Record<string, string>> = {};
+
+       Object.entries(schemas).forEach(([key, schema]) => {
         try {
-            await schema.validate(req[field], {abortEarly: false});
-            return next();
+            schema.validateSync(req[key as TProperty], {abortEarly: false});
+            // return next();
            } catch (err) {
            const yupError = err as ValidationError;
            const errors: Record<string, string> = {};
@@ -42,8 +45,20 @@ export const validation: TValidation = (field, schema) => async (req, res, next)
    
                errors[error.path] = error.message;
            })
+
+           errorsResult[key] = errors;
    
-           return res.status(StatusCodes.BAD_REQUEST).json({ errors })
+        //    return res.status(StatusCodes.BAD_REQUEST).json({ errors })
        }
+       })
+
+       if (Object.entries(errorsResult).length === 0) {
+        return next();
+       } else {
+        return res.status(StatusCodes.BAD_REQUEST).json({ errors: errorsResult })
+
+       }
+
+        
 };
 

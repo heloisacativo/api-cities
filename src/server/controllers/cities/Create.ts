@@ -8,18 +8,9 @@ interface ICity {
     state: string;
 }
 
-const bodyValidation: yup.Schema<ICity> = yup.object().shape({
-    name: yup.string().required().min(3),
-    state: yup.string().required().min(3),
-})
-
-
 interface IFilter {
     filter?: string;
 }
-const queryValidation: yup.Schema<IFilter> = yup.object().shape({
-    filter: yup.string().required().min(3),
-})
 
 
 // Essa lógica aqui antes ficava aqui, foi pro Create.ts e lá foi mudada
@@ -90,20 +81,15 @@ const queryValidation: yup.Schema<IFilter> = yup.object().shape({
 // }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-export const createBodyValidator = validation('body', bodyValidation);
-export const createValidation = validation('query', queryValidation);
+export const createValidation = validation({
+    body: yup.object().shape({
+        name: yup.string().required().min(3),
+        state: yup.string().required().min(3),
+    }),
+    query: yup.object().shape({
+        filter: yup.string().required().min(3),
+    })
+});
 
 
 
